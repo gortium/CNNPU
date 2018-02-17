@@ -5,6 +5,6 @@ project(CLP)
 set(CMAKE_CXX_STNDARD 11)
 
 include_directories("lib/libfi/include")
-
+add_subdirectory(lib/googletest)
 add_subdirectory(src)
 add_subdirectory(test)

@@ -27,15 +27,8 @@ struct PETest : testing::Test
   }
 };
 
-class MACOperation
+struct MACOperation
 {
-  public:
-  MACOperation(double weight, double input, double carry, double result):
-      _weight(TestType(weight)),
-      _input(TestType(input)),
-      _carry(TestType(carry)),
-      _result(TestType(result))
-      {}
   TestType _weight;
   TestType _input;
   TestType _carry;
@@ -70,11 +63,11 @@ TEST_P(MACOperationTest, MACResult)
 }
 
 INSTANTIATE_TEST_CASE_P(Default, MACOperationTest, testing::Values(
-      MACOperation{0,0,0,0},
-      MACOperation{1,1,0,1},
-      MACOperation{1,1,1,2},
-      MACOperation{1,2,1,3},
-      MACOperation{2,2,1,5}
+      MACOperation{TestType(0),TestType(0),TestType(0),TestType(0)},
+      MACOperation{TestType(1),TestType(1),TestType(0),TestType(1)},
+      MACOperation{TestType(1),TestType(1),TestType(1),TestType(2)},
+      MACOperation{TestType(1),TestType(2),TestType(1),TestType(3)},
+      MACOperation{TestType(2),TestType(2),TestType(1),TestType(5)}
   ));
 
 
