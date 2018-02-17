@@ -9,7 +9,6 @@
 #include "fi/overflow/Saturate.hpp"
 #include "fi/rounding/Classic.hpp"
 
-
 #define TBIT 8
 
 // bool

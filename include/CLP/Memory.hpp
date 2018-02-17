@@ -6,6 +6,7 @@
 #define MEMORY_HPP
 
 #include "Types.hpp"
+#include <vector>
 
 template <typename T>
 class Memory
@@ -21,7 +22,7 @@ class Memory
 
   /// This is the memory space we're going to
   /// be using.
-  T *m_MemorySpace;
+  std::vector<T> m_MemorySpace;
 
   public:
 
@@ -50,9 +51,9 @@ class Memory
 template<typename T>
 Memory<T>::Memory()
     :
-    c_MaxAddress(255),  // The maximum constant
-    m_MemorySpace(new T[c_MaxAddress]) // The memory
+    c_MaxAddress(255)  // The maximum constant
 {
+  std::vector<T> m_MemorySpace(c_MaxAddress, 0);
   Clear(); // Our only function, clears the memory
   // in C++ we allocate the variables in the
   // constructor header, NOT here in the
@@ -61,13 +62,7 @@ Memory<T>::Memory()
 
 template<typename T>
 Memory<T>::~Memory()
-{
-  if (m_MemorySpace != nullptr)
-  {
-    delete[] m_MemorySpace;
-    m_MemorySpace = nullptr;
-  }
-}
+{}
 
 template<typename T>
 void Memory<T>::Clear()

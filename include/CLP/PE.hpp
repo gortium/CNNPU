@@ -31,6 +31,8 @@ class PE
 
     PE();
 
+    ~PE();
+
     T getReg2();
 
     T getReg1();
@@ -43,9 +45,9 @@ class PE
 
 template<typename T>
 PE<T>::PE():
-reg0(0),
-reg1(0),
-reg2(0)
+_reg0(0),
+_reg1(0),
+_reg2(0)
 {}
 
 template<typename T>
@@ -55,21 +57,22 @@ PE<T>::~PE()
 template<typename T>
 T PE<T>::getReg1()
 {
-  return reg1;
+  return _reg1;
 }
 
 template<typename T>
 T PE<T>::getReg2()
 {
-  return reg2;
+  return _reg2;
 }
 
 template<typename T>
 T PE<T>::step(T input, T weight, T carry)
 {
-  reg1 = reg0;
-  reg0 = input;
-  reg2 = addResult;
+  static T addResult, mulResult;
+  _reg1 = _reg0;
+  _reg0 = input;
+  _reg2 = addResult;
   addResult = mulResult + carry;
   mulResult = (weight * input);
 }
