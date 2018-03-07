@@ -8,7 +8,31 @@
 #include "CLP/PE.hpp"
 #include "CLP/Types.hpp"
 #include <vector>
-#include <deque>
+#include <queue>
+
+/**
+ * Convolutionnal Element
+ * Objects that compute a convolution.
+ *
+ *@tparam T      Type of input and output data.
+ *
+ *                                             bias
+ *                                               |
+ *                                              \/
+ *             weigts, wEnable    biasEnable-->[reg]
+ *                      |                        |
+ *                     \/                       \/
+ *  [ input row h ]--->[PE]--->[PE]--->[PE]--->[adder and reg]
+ *       /\                                      |
+ *       |                                      \/
+ *  [input row h+1]--->[PE]--->[PE]--->[PE]--->[adder and reg]
+ *       /\                                      |
+ *       |                                      \/
+ *  [input row h+2]--->[PE]--->[PE]--->[PE]--->[adder and reg]
+ *       /\                                      |
+ *       |                                      \/
+ *     input                                   output
+ */
 
 template <typename T>
 class CE
@@ -16,10 +40,11 @@ class CE
   private:
   std::vector< std::vector< PE<T> > > _PEs;
   std::vector< std::vector<T> > _weights;
+  std::vector< std::queue<T> > _inputs;
+  T _output;
+  bool _bEnable, _wEnable;
   std::vector<T> _row_regs;
-  std::deque< std::vector<T> > _inputs;
-  int _nb_row, _nb_col;
-
+  int _size, _size;
 
   public:
   CE(int nb_row, int nb_col);
@@ -27,32 +52,30 @@ class CE
   T step();
   T getOutputReg();
   void LoadWeights( std::vector< std::vector<T> > weights );
-  void LoadInputs( std::vector<T> inputs );
+  void LoadWeights( T bias );
+  void LoadInputs( T input );
 };
 
 // --------------- Templatized Implementation ---------------
 
 template<typename T>
-CE<T>::CE(int nb_row, int nb_col) :
-    _nb_row(nb_row),
-    _nb_col(nb_col),
-    _row_regs(nb_row+1, 0)
+CE<T>::CE(int size) :
+    _size(size),
+    _size(nb_col),
+    _bias(0),
+    _row_regs(nb_row+1, 0),
+    _bEnable(0),
+    _wEnable(0)
 {
-  std::vector< std::vector<T> > _weights(_nb_row, std::vector<T>(_nb_col, 0));
-  std::vector< std::vector< PE<T> > > _PEs(_nb_row, std::vector< PE<T> >(new PE<T>()));
+  std::vector< std::vector< PE<T> > > _PEs(_size, std::vector< PE<T> >(new PE<T>()));
+  std::vector< std::vector<T> > _weights(_size, std::vector<T>(_size, T(0)));
+  std::vector< std::vector<T> > _inputs(_size, std::queue<T>());
+  std::vector<T> _row_regs(T(0));
 }
 
 template<typename T>
 CE<T>::~CE()
-{
-  for(int i = 0; i < _nb_row; i++)
-  {
-    for(int j = 0; j < _nb_col; j++)
-    {
-      delete _PEs[i][j];
-    }
-  }
-}
+{}
 
 template<typename T>
 T CE<T>::getOutputReg()
@@ -60,44 +83,69 @@ T CE<T>::getOutputReg()
   return _row_regs.back();
 }
 
-template<typename T>
-void CE<T>::LoadWeights( std::vector< std::vector<T> > weights )
+template <typename T>
+T CE<T>::setSigs(T input, std::vector< std::vector<T> > weights, T wEnable, T bias, T bEnable)
 {
+  _intput = input;
+  _bias = bias;
   _weights = weights;
-}
-
-template<typename T>
-void CE<T>::LoadInputs( std::vector<T> inputs )
-{
-  _inputs.push(inputs);
-  _inputs.pop;
+  _wEnable = wEnable;
+  _biasEnable = bEnable;
 }
 
 template<typename T>
 T CE<T>::step()
 {
-  // Example _nb_row = 5. From 4 to 0
-  for(int i = _nb_row-1; i >= 0; i--)
+  // PE process
+  // Example _size = 5. From 4 to 0
+  for(int i = _size-1; i >= 0; i--)
   {
-    int inputCounter = 0;
     /// Row adders
-    _row_regs[i+1] = _PEs[i][_nb_col-1].getReg2() + _row_regs[i];
+    if(i == _size-1)
+    {
+      _row_regs[i+1] = _PEs[i][_size-1].getReg2() + _bias;
+    }
+    else if(i == 0)
+    {
+      _output = _PEs[i][_size-1].getReg2() + _row_regs[i];
+    }
+    else
+    {
+      _row_regs[i+1] = _PEs[i][_size-1].getReg2() + _row_regs[i];
+    }
 
     /// Column Mac
-    // Example _nb_col = 5. From 4 to 0
-    for(int j = _nb_col-1; j >= 0; j--)
+    // Example _size = 5. From 4 to 0
+    for(int j = _size-1; j >= 0; j--)
     {
       if(j != 0)
       {
-        _PEs[i][j].step(_PEs[i][j-1].getReg1(), _weights[i][j], _PEs[i][j - 1].getReg2());
+        _PEs[i][j].setSigs(_PEs[i][j-1].getReg1(), _PEs[i][j - 1].getReg2(), weights[i][j], _wEnable);
+        _PEs[i][j].step();
       }
       else
       {
-        _PEs[i][j].step(_inputs[i], _weights[i][j], _inputs[i][inputCounter]);
+        _PEs[i][j].setSigs(_inputs[i].front, T(0), weights[i][j], _wEnable);
+        _PEs[i][j].step();
       }
-      inputCounter++;
     }
   }
+
+  // bias signal to reg
+  if(_bEnable)
+  {
+    _row_regs.front() = _bias;
+  }
+
+  // new input into the lower fifo
+  _inputs.back().push(_input);
+  // top of other fifo into the bottom of the next fifo
+  for(int i = 0; i < _inputs.size(); i++)
+  {
+    _inputs[i + 1].push(_inputs[i].front());
+    _inputs[i].pop();
+  }
+  _inputs.front().pop();
 }
 
 #endif //CE_H

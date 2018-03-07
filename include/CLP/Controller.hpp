@@ -7,21 +7,10 @@
 
 #include <iostream>       // std::cout
 #include <string>         // std::string
-#include <bitset>         // std::bitset
+#include "HyperParams.hpp"
 
 #define FILTER_SIZE 9
 #define BIT_WIDHT 8
-
-struct LayerHParam
-{
-  int inputWidth;
-  int inputHeight;
-  int inputDepth;
-  int nbOfFilter;
-  int filterSize;
-  int sliding;
-  int padding;
-};
 
 /**
  * Objects that control multiple CE to perform convolution layer computation.
