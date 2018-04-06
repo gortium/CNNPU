@@ -7,13 +7,14 @@
 #include "../lib/libfi/include/fi/overflow/Saturate.hpp"
 #include "../lib/libfi/include/fi/rounding/Classic.hpp"
 #include "CLP/CE.hpp"
+#include "CLP/PE.hpp"
 #include "CLP/HyperParams.hpp"
 #include "gtest/gtest.h"
 #include <queue>
 #include <vector>
 #include <deque>
 
-typedef Fi::Fixed<8,4,Fi::SIGNED,Fi::Saturate,Fi::Classic> TestType;
+typedef Fi::Fixed<8,4,Fi::SIGNED,Fi::Throw,Fi::Classic> TestType;
 
 /// Tests fixtures
 struct CEFixture : public ::testing::Test
@@ -22,9 +23,9 @@ struct CEFixture : public ::testing::Test
   CE<TestType>* _CE;
   CEFixture() {}
   virtual ~CEFixture() {}
-  void SetUp(const int size)
+  void SetUp(const int filterSize, const int fifoSize)
   {
-    _CE = new CE<TestType>(size);
+    _CE = new CE<TestType>(filterSize, fifoSize);
   }
   virtual void TearDown() {
     delete _CE;
@@ -32,93 +33,147 @@ struct CEFixture : public ::testing::Test
 };
 
 /// Test data structures
-struct singleConvData
+struct ConvData
 {
   std::vector< std::vector<TestType> > weights;
   std::vector< std::vector<TestType> > inputs;
-  std::deque< std::vector<TestType> > results;
-  T _bias;
+  std::vector< std::vector<TestType> > results;
+  TestType bias;
   LayerHParam layerHParam;
 
-  //TODO
-//  friend std::ostream&operator<<(std::ostream& os, const singleConvData& obj)
-//  {
-//    return os
-//        << "weight:" << obj._inputs
-//        << "input:" << obj._input
-//        << "carry:" << obj._carry
-//        << "output:" << obj._result;
-//  }
+  friend std::ostream&operator<<(std::ostream& os, const ConvData& obj)
+  {
+    os << "weight:";
+    for(int i = 0 ; i < obj.weights.size(); ++i)
+      for(int j = 0 ; j < obj.weights[i].size(); ++j)
+        os << obj.weights[i][j] << "\n";
+    return os;
+  }
 };
 
 /// Test cases
-//struct singleConvTestCase : CEFixture, testing::WithParamInterface<singleConvData> {};
+struct ConvTestCase : CEFixture, testing::WithParamInterface<ConvData> {};
+
 
 /// The tests
-TEST_P(singleConvTestCase, singleConvTest)
+TEST_P(ConvTestCase, ConvTest)
 {
   // Get the data
   const ParamType data = GetParam();
   std::vector<TestType> zeroInput;
 
-  // Init CE
-  SetUp(data.layerHParam.filterSize);
+  // Variables
+  int inWI = 0, inHI = 0, outWI = 0, outHI = 0;
 
-  // Load weight and bias
-  _CE->setSigs(data.inputs[i][j], data.weights, true, data.bias, true);
+  // Init CE
+  SetUp(data.layerHParam.filterSize, data.layerHParam.inputWidth);
+
+  /// Load weight and bias
+  _CE->setSigs(TestType(0), data.weights, true, data.bias, true);
   _CE->step();
   EXPECT_EQ(TestType(0), _CE->getOutputReg());
 
-  // Load first inputs
-  for(int i = 0; i < data.layerHParam.filterSize * data.layerHParam.inputWidth; i++)
+  for(int i = 0;
+      i < data.layerHParam.filterSize * data.layerHParam.inputWidth
+          + data.layerHParam.inputWidth * 2
+          + (data.layerHParam.inputWidth - 1);
+      i++)
   {
-    // Load data to the CE
-    _CE->setSigs(data.inputs[i][j], data.weights, false, data.bias, false);
+    /// Input signals
+    if(i < data.layerHParam.inputHeight * data.layerHParam.inputWidth)
+    {
+      _CE->setSigs(data.inputs[inHI][inWI], data.weights, false, data.bias, false);
 
+      // Increment input data indexes
+      if(inWI == data.layerHParam.inputWidth - 1)
+      {
+        inWI = 0;
+        inHI++;
+      }
+      else
+      {
+        inWI++;
+      }
+    }
+    else
+    {
+      _CE->setSigs(TestType(0), data.weights, false, data.bias, false);
+    }
+
+    /// STEP
     _CE->step();
 
-    EXPECT_EQ(TestType(0), _CE->getOutputReg());
-  }
-  // Compute & check outputs
-  // For each input row
-  for(int i = 0; i < data.layerHParam.inputHeight; i++)
-  {
-    // For each input column
-    for(int j = 0; j < data.layerHParam.inputWidth; j++ )
+    /// Outputs signals
+    if(i > data.layerHParam.filterSize * data.layerHParam.inputWidth
+            + data.layerHParam.inputWidth * 2)
     {
-      // Load data to the CE
-      _CE->setSigs(data.inputs[i][j], data.weights, false, data.bias, false);
+      EXPECT_EQ(data.results[outHI][outWI], _CE->getOutputReg());
 
-      _CE->step();
-
-      EXPECT_EQ(data._results[i-data.layerHParam.filterSize][j], _CE->getOutputReg()); //TODO
+      // Increment output data indexes
+      if(inWI == data.layerHParam.inputWidth - 1)
+      {
+        outWI = 0;
+        outHI++;
+      }
+      else
+      {
+        outWI++;
+      }
     }
   }
-  // Then, get the last outputs
-  for(int i = 0; i < data.layerHParam.filterSize; i++)
-  {
-    for(int j = 0; j < data.layerHParam.inputWidth; j++ )
-    {
-      // Load data to the CE
-      _CE->setSigs(data.inputs[i][j], data.weights, false, data.bias, false);
-
-      _CE->step();
-
-      EXPECT_EQ(data.results[i][j], _CE->getOutputReg()); //TODO
-    }
-  }
-  EXPECT_EQ(TestType(0), _CE->getOutputReg());
 }
 
 /// Tests instantiations
-INSTANTIATE_TEST_CASE_P(Default, continousMACTestCase, testing::Values(
-   continousMACData{TestType(0),    TestType(0),     TestType(0),    TestType(0),
-                    TestType(1.1),  TestType(1.1),   TestType(0.01), TestType(1.22),
-                    TestType(1.5),  TestType(-1.02), TestType(1.4),  TestType(-0.13) },
+INSTANTIATE_TEST_CASE_P(Default, ConvTestCase, testing::Values(
+    // Weights, Inputs, Results, Bias, Layer params
+    ConvData{std::vector< std::vector<TestType> >{{TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5)}},
 
-   continousMACData{TestType(-1.3), TestType(2.2),   TestType(-1),   TestType(-3.86),
-                    TestType(2.0),  TestType(2.5),   TestType(-2),   TestType(3),
-                    TestType(0),    TestType(0),     TestType(0),    TestType(0)     }
+             std::vector< std::vector<TestType> >{{TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5)}},
+
+             std::vector< std::vector<TestType> >{{TestType(2.75)}},
+             TestType(0.5),
+             // inputWidth, inputHeight, inputDepth, nbOfFilter, filterSize, sliding, padding
+             LayerHParam{3,3,1,1,3,1,0}
+    },
+    // Weights, Inputs, Results, Bias, Layer params
+    ConvData{std::vector< std::vector<TestType> >{{TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5)}},
+
+             std::vector< std::vector<TestType> >{{TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5)}},
+
+             std::vector< std::vector<TestType> >{{TestType(2.75),TestType(2.75),TestType(2.75)},
+                                                  {TestType(2.75),TestType(2.75),TestType(2.75)},
+                                                  {TestType(2.75),TestType(2.75),TestType(2.75)}},
+             TestType(0.5),
+             // inputWidth, inputHeight, inputDepth, nbOfFilter, filterSize, sliding, padding
+             LayerHParam{5,5,1,1,3,1,0}
+    },
+    // Weights, Inputs, Results, Bias, Layer params
+    ConvData{std::vector< std::vector<TestType> >{{TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5)}},
+
+             std::vector< std::vector<TestType> >{{TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5)},
+                                                  {TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5),TestType(0.5)}},
+
+             std::vector< std::vector<TestType> >{{TestType(1.5),TestType(1.5),TestType(1.5)},
+                                                  {TestType(1.5),TestType(1.5),TestType(1.5)},
+                                                  {TestType(1.5),TestType(1.5),TestType(1.5)}},
+             TestType(0.5),
+             // inputWidth, inputHeight, inputDepth, nbOfFilter, filterSize, sliding, padding
+             LayerHParam{5,5,1,1,2,1,0}
+    }
 ));
 
 int main(int argc, char* argv[])

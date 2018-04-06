@@ -100,13 +100,7 @@ TEST_P(singleMACTestCase, singleMACTest)
 
   // Check output & Compute
   EXPECT_EQ(TestType(0), _PE->getReg2());
-  _PE->setSigs(data.input, TestType(0), TestType(0), false);
-  _PE->step();
-  EXPECT_EQ(TestType(0), _PE->getReg2());
-  _PE->setSigs(TestType(0), data.carry, TestType(0), false);
-  _PE->step();
-  EXPECT_EQ(TestType(0), _PE->getReg2());
-  _PE->setSigs(TestType(0), TestType(0), TestType(0), false);
+  _PE->setSigs(data.input, data.carry, TestType(0), false);
   _PE->step();
   EXPECT_EQ(data.result, _PE->getReg2());
 }
@@ -122,32 +116,26 @@ TEST_P(continousMACTestCase, continousMACTest)
 
   // Check output & Compute
   EXPECT_EQ(TestType(0), _PE->getReg2());
-  _PE->setSigs(data.input1, TestType(0), TestType(0), false);
-  _PE->step();
-  EXPECT_EQ(TestType(0), _PE->getReg2());
-  _PE->setSigs(data.input2, data.carry1, TestType(0), false);
-  _PE->step();
-  EXPECT_EQ(TestType(0), _PE->getReg2());
-  _PE->setSigs(data.input3, data.carry2, TestType(0), false);
+  _PE->setSigs(data.input1, data.carry1, TestType(0), false);
   _PE->step();
   EXPECT_EQ(data.result1, _PE->getReg2());
-  _PE->setSigs(TestType(0), data.carry3, TestType(0), false);
+  _PE->setSigs(data.input2, data.carry2, TestType(0), false);
   _PE->step();
   EXPECT_EQ(data.result2, _PE->getReg2());
-  _PE->setSigs(TestType(0), TestType(0), TestType(0), false);
+  _PE->setSigs(data.input3, data.carry3, TestType(0), false);
   _PE->step();
   EXPECT_EQ(data.result3, _PE->getReg2());
 }
 
-/// Tests instantiations
+/// Test instantiation
 INSTANTIATE_TEST_CASE_P(Positif, singleMACTestCase, testing::Values(
-      // Positif
+    // Positif
     singleMACData{ TestType(0),   TestType(0),      TestType(0),    TestType(0)     },
     singleMACData{ TestType(1),   TestType(1),      TestType(0),    TestType(1)     },
     singleMACData{ TestType(1),   TestType(1),      TestType(1),    TestType(2)     },
     singleMACData{ TestType(1),   TestType(2),      TestType(1),    TestType(3)     },
     singleMACData{ TestType(2),   TestType(2),      TestType(2),    TestType(6)     }
-  ));
+));
 
 INSTANTIATE_TEST_CASE_P(Negatif, singleMACTestCase, testing::Values(
     // Negatif
@@ -168,13 +156,13 @@ INSTANTIATE_TEST_CASE_P(Fraction, singleMACTestCase, testing::Values(
 ));
 
 INSTANTIATE_TEST_CASE_P(Default, continousMACTestCase, testing::Values(
-   continousMACData{ TestType(0),    TestType(0),     TestType(0),    TestType(0),
-                                     TestType(1.1),   TestType(0.01), TestType(0.01),
-                                     TestType(-1.02), TestType(1.4),  TestType(1.4)    },
+    continousMACData{ TestType(0),    TestType(0),     TestType(0),    TestType(0),
+                      TestType(1.1),   TestType(0.01), TestType(0.01),
+                      TestType(-1.02), TestType(1.4),  TestType(1.4)    },
 
-   continousMACData{ TestType(-1.25), TestType(2.1875), TestType(-1),   TestType(-3.734375),
-                                      TestType(2.5),    TestType(-2),   TestType(-5.125),
-                                      TestType(-3.25),  TestType(-5),   TestType(-0.9375) }
+    continousMACData{ TestType(-1.25), TestType(2.1875), TestType(-1),   TestType(-3.734375),
+                      TestType(2.5),    TestType(-2),   TestType(-5.125),
+                      TestType(-3.25),  TestType(-5),   TestType(-0.9375) }
 ));
 
 int main(int argc, char* argv[])
