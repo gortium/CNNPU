@@ -4,4 +4,4 @@ set(CMAKE_CXX_STNDARD 11)
 
 include_directories("../include")
 
-add_executable(CLP CLP/CLP.cpp)
+add_executable(CNNP CNNP/CNNP.cpp)

@@ -12,7 +12,7 @@ struct LayerHParam
   int inputDepth;
   int nbOfFilter;
   int filterSize;
-  int sliding;
+  int stride;
   int padding;
 };
 

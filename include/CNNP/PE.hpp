@@ -13,28 +13,27 @@
  *
  *  Sig1--->[reg0]-->[reg1]
  *       \
- *        \    [w]<---Sig5
+ *        \    [w]<---Sig3
  *         \  /  |
  *         (X)    <---wEnable
  *          |
- *         Sig3
  *          |
  *  Sig2-->(+)
  *          |
- *         Sig4---->[reg2]
+ *          ------->[reg2]
  *
  **/
 template <typename T>
 class PE
 {
   private:
-  T _reg0, _reg1, _reg2, _w, _sig1, _sig2, _sig3, _sig4, _sig5;
+  T _reg0, _reg1, _reg2, _w, _sig1, _sig2, _sig3;
   bool _wEnable;
 
   public:
   PE();
   ~PE();
-  void setSigs(T sig1, T sig2, T sig5, bool wEnable);
+  void setSigs(T sig1, T sig2, T sig3, bool wEnable);
   T getReg1();
   T getReg2();
   T step();
@@ -51,8 +50,6 @@ _w(T(0)),
 _sig1(T(0)),
 _sig2(T(0)),
 _sig3(T(0)),
-_sig4(T(0)),
-_sig5(T(0)),
 _wEnable(false)
 {}
 
@@ -61,11 +58,11 @@ PE<T>::~PE()
 {}
 
 template<typename T>
-void PE<T>::setSigs(T sig1, T sig2,  T sig5, bool wEnable)
+void PE<T>::setSigs(T sig1, T sig2,  T sig3, bool wEnable)
 {
   _sig1 = sig1;
   _sig2 = sig2;
-  _sig5 = sig5;
+  _sig3 = sig3;
   _wEnable = wEnable;
 }
 
@@ -87,10 +84,8 @@ T PE<T>::step()
   // Internal signal propagation
   _reg1 = _reg0;
   _reg0 = _sig1;
-  _reg2 = _sig4;
-  _sig4 = _sig3 + _sig2;
-  _sig3 = (_w * _sig1);
-  if(_wEnable){_w = _sig5;}
+  _reg2 = (_w * _sig1) + _sig2;
+  if(_wEnable){_w = _sig3;}
 }
 
 #endif //PE_H
