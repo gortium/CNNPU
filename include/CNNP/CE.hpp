@@ -152,9 +152,14 @@ void CE<T>::step()
   // Example _size = 5. From 4 to 0
   for (int i = _size - 1; i >= 0; i--)
   {
-    /// Row adders                                           TODO TODO TODO TODO TODO
+    /// Row adders
+    // If there is only one PE
+    if(_size - 1 == 0)
+    {
+      _output = _PEs[i][_size - 1].getReg2() + _adderRegs[i];
+    }
     // For the first cycle, last adder
-    if (i == _size - 1)
+    else if (i == _size - 1)
     {
       _output = _syncRegs[i - 1].front() + _adderRegs[i];
     }
