@@ -1,0 +1,4 @@
+[submodule "lib/libfi"]
+	url = https://github.com/gsarkis/libfi
+[submodule "lib/googletest"]
+	url = https://github.com/google/googletest
