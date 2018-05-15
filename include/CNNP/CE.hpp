@@ -1,6 +1,16 @@
-//
-// Created by gortium on 1/15/18.
-//
+/** 
+ *  @file    CE.hpp
+ *  @author  Thierry Pouplier (gortium)
+ *  @date    15/01/2018  
+ *  @version 1.0 
+ *  
+ *  @brief TODO
+ *
+ *  @section DESCRIPTION
+ *  
+ *  TODO
+ *
+ */
 
 #ifndef CE_H
 #define CE_H
@@ -12,44 +22,49 @@
 
 /**
  * Convolutionnal Element
- * Objects that compute a convolution.
+ * Objects that compute a convolution
  *
- *@tparam T      Type of input and output data.
+ * @tparam T Type of input and output data
  *
- *                                                              bias
+ *                                                              biasSig
  *                                                                |
  *                                                               \/
- *             weigts, wEnable                     biasEnable-->[reg]
+ *             weigtSigs, wEnable                     bEnable-->[reg]
  *                      |                                         |
  *                     \/                                        \/
- *  [input row]--->[PE]--->[PE]--->[PE]---------------->[adder and reg]
+ *  [inputRegs row]--->[PE]--->[PE]--->[PE]---------------->[adder and reg]
  *       /\                                                       |
  *       |                                                       \/
- *  [input row]--->[PE]--->[PE]--->[PE]--->[syncRegs]--->[adder and reg]
+ *  [inputRegs row]--->[PE]--->[PE]--->[PE]--->[syncRegs]--->[adder and reg]
  *       /\                                                       |
  *       |                                                       \/
- *  [input row]--->[PE]--->[PE]--->[PE]--->[syncRegs]--->[adder and reg]
+ *  [inputRegs row]--->[PE]--->[PE]--->[PE]--->[syncRegs]--->[adder and reg]
  *       /\                                                       |
  *       |                                                       \/
- *     inputSig                                                    output
+ *     inputSig                                                outputReg
  */
 
 template <typename T>
 class CE
 {
   private:
-  int _size;
-  T _bias;
-  T _inputSig;
-  T _output;
-  bool _bEnable;
-  bool _wEnable;
-  std::vector<T> _adderRegs;
-  std::vector< std::queue<T> > _syncRegs;
-
-  std::vector< std::vector< PE<T> > > _PEs;
-  std::vector< std::vector<T> > _weights;
-  std::vector< std::queue<T> > _inputs;
+  // Parameter
+  int _size;                                  ///< The size of the filter as int 
+  // Input signals
+  T _biasSig;                                 ///< The bias signal as a T type
+  std::vector< std::vector<T> > _weightSigs;  ///< The weights signals as a vector of vector of T type
+  T _inputSig;                                ///< The inputs signal as a T type
+  // Control signals
+  bool _bEnableSig;                           ///< The control signal that enable the writing of the bias register
+  bool _wEnableSig;                           ///< The control signal that enable the writing of the weights register
+  // Registers
+  T _outputReg;                               ///< The output register as a T type
+  std::vector<T> _adderRegs;                  ///< The adder registers as a vector of T type
+  std::vector< std::queue<T> > _syncRegs;     ///< The synchronization registers as a vector of queue of T type
+  std::vector< std::vector<T> > _weightRegs;  ///< The weights registers as a vector of vector of T type 
+  std::vector< std::queue<T> > _inputRegs;    ///< The inputs registers as a vector of queue of T type 
+  // Submodule
+  std::vector< std::vector< PE<T> > > _PEs;   ///< A vector of vector containning PE submodules
 
   public:
   CE(int filterSize, int fifoSize);
@@ -63,14 +78,22 @@ class CE
 // --------------- Templatized Implementation ---------------
 
 template<typename T>
+/**  
+* @brief  CE object constructor
+*  
+* @tparam T Type of input and output data
+*
+* @param  filterSize is the filter size (height and width are equal) as a int
+* @param  fifoSize is the FIFO queue size as a int. Should be equal to the input width 
+*/  
 CE<T>::CE(int filterSize, int fifoSize) :
     _size(filterSize),
-    _bias(T(0)),
+    _biasSig(T(0)),
     _inputSig(T(0)),
-    _output(T(0)),
+    _outputReg(T(0)),
     _adderRegs(_size, T(0)),
-    _bEnable(0),
-    _wEnable(0)
+    _bEnableSig(0),
+    _wEnableSig(0)
 {
   if(_size == 0)
   {
@@ -90,18 +113,18 @@ CE<T>::CE(int filterSize, int fifoSize) :
     }
   }
 
-  _weights.resize(_size);
-  for(int i=0; i < _weights.size(); i++)
+  _weightRegs.resize(_size);
+  for(int i=0; i < _weightRegs.size(); i++)
   {
-    _weights[i].assign(_size, T(0));
+    _weightRegs[i].assign(_size, T(0));
   }
 
-  _inputs.resize(_size);
-  for(int i=0; i < _inputs.size(); i++)
+  _inputRegs.resize(_size);
+  for(int i=0; i < _inputRegs.size(); i++)
   {
     for(int j=0; j < fifoSize; j++)
     {
-      _inputs[i].emplace(T(0));
+      _inputRegs[i].emplace(T(0));
     }
   }
 
@@ -114,11 +137,22 @@ CE<T>::CE(int filterSize, int fifoSize) :
     }
   }
 }
-
+/**  
+* @brief  CE object destructor
+*
+* @tparam T Type of input and output data
+*
+*/  
 template<typename T>
 CE<T>::~CE()
 {}
-
+/**  
+* @brief  Function used to know the CE latency
+*
+* @tparam T Type of input and output data
+*  
+* @return the CE latency in step as a int
+*/  
 template<typename T>
 int CE<T>::latency()
 {
@@ -128,23 +162,45 @@ int CE<T>::latency()
   lag += (_PEs[0][0].latency())*_PEs.size()*2;
   return lag;
 }
-
+/**  
+* @brief  Function used get the output register of the CE
+*
+* @tparam T Type of input and output data
+*  
+* @return the CE output register as a T type
+*/  
 template<typename T>
 T CE<T>::getOutputReg()
 {
-  return _output;
+  return _outputReg;
 }
-
+/**  
+* @brief  Function used to set the input signals at before each step
+*
+* @tparam T Type of input and output data
+*
+* @param  input is the next input to enter the FIFOs as a T type
+* @param  weights is the weights that are written to the weights registers if wEnable is HIGH
+* @param  wEnable is the control signal that ennable the weights to be written
+* @param  bias is the bias that is written to the bias registers if bEnable is HIGH
+* @param  bEnable is the control signal that ennable the bias to be written
+*  
+* @return the CE output register as a T type
+*/  
 template <typename T>
 void CE<T>::setSigs(T input, std::vector< std::vector<T> > weights, bool wEnable, T bias, bool bEnable)
 {
   _inputSig = input;
-  _bias = bias;
-  _weights = weights;
-  _wEnable = wEnable;
-  _bEnable = bEnable;
+  _biasSig = bias;
+  _weightSigs = weights;
+  _wEnableSig = wEnable;
+  _bEnableSig = bEnable;
 }
-
+/**  
+* @brief Execute one step. Need to be called every step 
+*
+* @tparam T Type of input and output data
+*/  
 template<typename T>
 void CE<T>::step()
 {
@@ -156,12 +212,12 @@ void CE<T>::step()
     // If there is only one PE
     if(_size - 1 == 0)
     {
-      _output = _PEs[i][_size - 1].getReg2() + _adderRegs[i];
+      _outputReg = _PEs[i][_size - 1].getReg2() + _adderRegs[i];
     }
     // For the first cycle, last adder
     else if (i == _size - 1)
     {
-      _output = _syncRegs[i - 1].front() + _adderRegs[i];
+      _outputReg = _syncRegs[i - 1].front() + _adderRegs[i];
     }
       // For the last cycle, first adder
     else if (i == 0)
@@ -188,34 +244,40 @@ void CE<T>::step()
       // Every cycle exept the last one, first PE
       if (j != 0)
       {
-        _PEs[i][j].setSigs(_PEs[i][j - 1].getReg1(), _PEs[i][j - 1].getReg2(), _weights[i][j], _wEnable);
+        _PEs[i][j].setSigs(_PEs[i][j - 1].getReg1(), _PEs[i][j - 1].getReg2(), _weightRegs[i][j], _wEnableSig);
       }
       // For the last cycle, the first colum of PE
       else
       {
-        _PEs[i][j].setSigs(_inputs[i].front(), T(0), _weights[i][j], _wEnable);
+        _PEs[i][j].setSigs(_inputRegs[i].front(), T(0), _weightRegs[i][j], _wEnableSig);
       }
 
       _PEs[i][j].step();
     }
   }
 
-  /// Bias
-  if (_bEnable)
+  /// Bias mux
+  if (_bEnableSig)
   {
-    _adderRegs.front() = _bias;
+    _adderRegs.front() = _biasSig;
+  }
+
+  /// Weights mux
+  if (_wEnableSig)
+  {
+    _weightRegs = _weightSigs;
   }
 
   /// Inputs
   // new input into the lower fifo
-  _inputs.back().push(_inputSig);
+  _inputRegs.back().push(_inputSig);
   // top of other fifo into the bottom of the next fifo
-  for (int i = _inputs.size() - 1; i >= 1; i--)
+  for (int i = _inputRegs.size() - 1; i >= 1; i--)
   {
-    _inputs[i - 1].push(_inputs[i].front());
-    _inputs[i].pop();
+    _inputRegs[i - 1].push(_inputRegs[i].front());
+    _inputRegs[i].pop();
   }
-  _inputs.front().pop();
+  _inputRegs.front().pop();
 }
 
 #endif //CE_H
