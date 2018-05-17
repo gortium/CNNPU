@@ -13,7 +13,7 @@
 #include <vector>
 #include <deque>
 
-typedef Fi::Fixed<8,4,Fi::SIGNED,Fi::Saturate,Fi::Classic> TestType;
+typedef Fi::Fixed<8,4,Fi::SIGNED,Fi::Throw,Fi::Classic> TestType;
 
 /// Tests fixtures
 struct PEFixture : testing::Test

@@ -14,7 +14,7 @@
  *                                                             biasSig
  *                                                                |
  *                                                               \/
- *             weigtSigs, wEnable                     bEnable-->[reg]
+ *                  weigtSigs                                   [reg]
  *                      |                                         |
  *                     \/                                        \/
  *  [inputRegs row]--->[PE]--->[PE]--->[PE]---------------->[adder and reg]
@@ -168,17 +168,13 @@ T CE<T>::getOutputReg()
   return _outputReg;
 }
 /**  
-* @brief  Function used to set the input signals at before each step
+* @brief  Function used to set the input signals before each step
 *
 * @tparam T Type of input and output data
 *
 * @param  input is the next input to enter the FIFOs as a T type
-* @param  weights is the weights that are written to the weights registers if wEnable is HIGH
-* @param  wEnable is the control signal that ennable the weights to be written
-* @param  bias is the bias that is written to the bias registers if bEnable is HIGH
-* @param  bEnable is the control signal that ennable the bias to be written
-*  
-* @return the CE output register as a T type
+* @param  weights is the weights that are written to the weights registers
+* @param  bias is the bias that is written to the bias registers
 */  
 template <typename T>
 void CE<T>::setSigs(T input, std::vector< std::vector<T> > weights, T bias)

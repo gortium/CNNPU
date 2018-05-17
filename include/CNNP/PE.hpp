@@ -11,16 +11,16 @@
  *  This module, when given a weight, a input and a partial result, compute a MAC operation.
  *  The added reg0 delay the input to the next PE and permit the partials results to be added together.
  *
- *  Sig1--->[reg0]-->[reg1]
- *       \
- *        \    [w]<---Sig3
- *         \  /  |
- *         (X)    <---wEnable
- *          |
- *          |
- *  Sig2-->(+)
- *          |
- *          ------->[reg2]
+ *       dataInputSig--->[delayReg]-->[dataOutputReg]
+ *                   \
+ *                    \    [w]<---weightSig
+ *                     \  /
+ *                     (X)
+ *                      |
+ *                      |
+ *  partialResultSig-->(+)
+ *                      |
+ *                      ------->[outputReg]
  */
 
 
@@ -37,64 +37,110 @@ template <typename T>
 class PE
 {
   private:
-  T _reg0, _reg1, _reg2; ///< The PE registers as T type
+  T _delayReg, _dataOutputReg, _outputReg; ///< The PE registers as T type
   T _w;                  ///< The weight register as T type
-  T _sig1, _sig2, _sig3; ///< The PE signals as T type
+  T _dataInputSig, _partialResultSig, _weightSig; ///< The PE signals as T type
 
   public:
   PE();
   ~PE();
-  void setSigs(T sig1, T sig2, T sig3);
-  T getReg1();
-  T getReg2();
+  int latency();
+  T getDataOutputReg();
+  T getOutputReg();
+  void setSigs(T dataInputSig, T partialResultSig, T weightSig);
   T step();
 };
 
 // --------------- Templatized Implementation ---------------
-
+/**  
+* @brief  PE object constructor
+*  
+* @tparam T Type of input and output data 
+*/
 template<typename T>
 PE<T>::PE():
-_reg0(T(0)),
-_reg1(T(0)),
-_reg2(T(0)),
+_delayReg(T(0)),
+_dataOutputReg(T(0)),
+_outputReg(T(0)),
 _w(T(0)),
-_sig1(T(0)),
-_sig2(T(0)),
-_sig3(T(0))
+_dataInputSig(T(0)),
+_partialResultSig(T(0)),
+_weightSig(T(0))
 {}
-
+/**  
+* @brief  CE object destructor
+*
+* @tparam T Type of input and output data
+*
+*/
 template<typename T>
 PE<T>::~PE()
 {}
-
+/**  
+* @brief  Function used to know the PE latency
+*
+* @tparam T Type of input and output data
+*  
+* @return the PE latency in step as a int
+*/
 template<typename T>
-void PE<T>::setSigs(T sig1, T sig2,  T sig3)
+int PE<T>::latency()
 {
-  _sig1 = sig1;
-  _sig2 = sig2;
-  _sig3 = sig3;
+  return 1;
 }
-
+/**  
+* @brief  Function used get the register 1 of the PE
+*
+* @tparam T Type of input and output data
+*  
+* @return the PE register 1 value as a T type
+*/
 template<typename T>
-T PE<T>::getReg1()
+T PE<T>::getDataOutputReg()
 {
-  return _reg1;
+  return _dataOutputReg;
 }
-
+/**  
+* @brief  Function used get the register 2 of the PE
+*
+* @tparam T Type of input and output data
+*  
+* @return the PE register 2 value as a T type
+*/
 template<typename T>
-T PE<T>::getReg2()
+T PE<T>::getOutputReg()
 {
-  return _reg2;
+  return _outputReg;
 }
-
+/**  
+* @brief  Function used to set the input signals before each step
+*
+* @tparam T Type of input and output data
+*
+* @param  dataInputSig is the next input to enter the PE as a T type
+* @param  partialResultSig is the partial result from the previous PE as a T type
+* @param  weightSig is the weights that are written to the weights registers as a T type
+**/
+template<typename T>
+void PE<T>::setSigs(T dataInputSig, T partialResultSig,  T weightSig)
+{
+  _dataInputSig = dataInputSig;
+  _partialResultSig = partialResultSig;
+  _weightSig = weightSig;
+}
+/**
+* @brief Execute one step. Need to be called every step
+*
+* @tparam T Type of input and output data
+*/
 template<typename T>
 T PE<T>::step()
 {
   // Internal signal propagation
-  _reg1 = _reg0;
-  _reg0 = _sig1;
-  _reg2 = (_w * _sig1) + _sig2;
-  _w = _sig3;
+  _dataOutputReg = _delayReg;
+  _delayReg = _dataInputSig;
+  _outputReg = (_w * _dataInputSig) + _partialResultSig;
+  _w = _weightSig;
 }
 
 #endif //PE_H
