@@ -2,8 +2,8 @@
 // Created by gortium on 2/18/18.
 //
 
-#ifndef CLP_HYPERPARAMS_H
-#define CLP_HYPERPARAMS_H
+#ifndef CNNP_HYPERPARAMS_H
+#define CNNP_HYPERPARAMS_H
 
 struct LayerHParam
 {
@@ -16,4 +16,4 @@ struct LayerHParam
   int padding;
 };
 
-#endif //CLP_HYPERPARAMS_H
+#endif //CNNP_HYPERPARAMS_H

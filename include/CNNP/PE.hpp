@@ -1,15 +1,15 @@
-//
-// Created by gortium on 1/10/18.
-//
-
-#ifndef PE_H
-#define PE_H
-
 /**
- * Processing Element
- * Objects that compute a MAC.
+ *  @file    PE.hpp
+ *  @author  Thierry Pouplier (gortium)
+ *  @date    10/01/2018
+ *  @version 1.0
  *
- *@tparam T      Type of input and output data.
+ *  @brief Processing Element module
+ *
+ *  @section DESCRIPTION
+ *
+ *  This module, when given a weight, a input and a partial result, compute a MAC operation.
+ *  The added reg0 delay the input to the next PE and permit the partials results to be added together.
  *
  *  Sig1--->[reg0]-->[reg1]
  *       \
@@ -21,14 +21,26 @@
  *  Sig2-->(+)
  *          |
  *          ------->[reg2]
+ */
+
+
+#ifndef PE_H
+#define PE_H
+
+/**
+ * @brief Processing Element
+ * Objects that compute a MAC.
  *
+ *@tparam T      Type of input and output data.
  **/
 template <typename T>
 class PE
 {
   private:
-  T _reg0, _reg1, _reg2, _w, _sig1, _sig2, _sig3;
-  bool _wEnable;
+  T _reg0, _reg1, _reg2; ///< The PE registers as T type
+  T _w;                  ///< The weight register as T type
+  T _sig1, _sig2, _sig3; ///< The PE signals as T type
+  bool _wEnable;         ///< The PE signals as T type
 
   public:
   PE();

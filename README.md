@@ -24,16 +24,23 @@ This project is heavily dependent on the [libfi](https://github.com/gsarkis/libf
 
 The automated tests are made with the help of the [Google Test library](https://github.com/google/googletest).
 
-### Compiling
+### Compiling the code
 
 The compiling is done withe the help of [cmake](https://cmake.org/). This command executed at the project root (CNNP/) should build everything for you.
 ```
 cmake
 ```
 
+### Compiling the documentation
+
+TODO -> doxygen
+
 ## Running the tests
 
-The test can be found in src/test folder. There is one test file for every module containning unit tests for this module. Executing one should run all the test for that module.
+The test can be found in src/test folder. There is one test file for every module containing unit tests for this module. 
+Executing one should run all the test for that module.
+The test are not true unit test in the fact that no mocking is used for now. To properly test the whole processor,
+smaller module should be tested first. PE, then CE, then Controller, then the CNNP. 
 
 To add tests, the [Google Test](https://github.com/google/googletest/blob/master/googletest/docs/Primer.md) framework need to be understood. The google test suite is open source and can be found [HERE](https://github.com/google/googletest)
 

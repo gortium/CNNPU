@@ -3,11 +3,11 @@
 //
 
 
-#include "../lib/libfi/include/fi/Fixed.hpp"
-#include "../lib/libfi/include/fi/overflow/Saturate.hpp"
-#include "../lib/libfi/include/fi/rounding/Classic.hpp"
-#include "CLP/PE.hpp"
-#include "CLP/HyperParams.hpp"
+#include "fi/Fixed.hpp"
+#include "fi/overflow/Saturate.hpp"
+#include "fi/rounding/Classic.hpp"
+#include "CNNP/PE.hpp"
+#include "CNNP/HyperParams.hpp"
 #include "gtest/gtest.h"
 #include <queue>
 #include <vector>

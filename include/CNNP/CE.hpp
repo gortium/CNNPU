@@ -4,29 +4,14 @@
  *  @date    15/01/2018  
  *  @version 1.0 
  *  
- *  @brief TODO
+ *  @brief Convolution element module
  *
  *  @section DESCRIPTION
  *  
- *  TODO
+ *  This module, when given weights, bias and input, compute a convolution. The PE placement and
+ *  it input FIFO permit a stride in the input matrix at each step.
  *
- */
-
-#ifndef CE_H
-#define CE_H
-
-#include "CLP/PE.hpp"
-#include "CLP/Types.hpp"
-#include <vector>
-#include <queue>
-
-/**
- * Convolutionnal Element
- * Objects that compute a convolution
- *
- * @tparam T Type of input and output data
- *
- *                                                              biasSig
+ *                                                             biasSig
  *                                                                |
  *                                                               \/
  *             weigtSigs, wEnable                     bEnable-->[reg]
@@ -42,6 +27,19 @@
  *       /\                                                       |
  *       |                                                       \/
  *     inputSig                                                outputReg
+ */
+
+#ifndef CE_H
+#define CE_H
+
+#include "CNNP/PE.hpp"
+#include <vector>
+#include <queue>
+
+/**
+ * @brief Convolutionnal Element. Objects that compute a convolution
+ *
+ * @tparam T Type of input and output data
  */
 
 template <typename T>
