@@ -28,6 +28,7 @@ struct PEFixture : testing::Test
   ~PEFixture()
   {
     delete _PE;
+    delete _PE;
   }
 };
 
@@ -49,7 +50,7 @@ struct singleMACData
   }
 };
 
-struct continousMACData
+struct continuousMACData
 {
   TestType weight;
 
@@ -65,7 +66,7 @@ struct continousMACData
   TestType carry3;
   TestType result3;
 
-  friend std::ostream&operator<<(std::ostream& os, const continousMACData& obj)
+  friend std::ostream&operator<<(std::ostream& os, const continuousMACData& obj)
   {
     return os
         << "weight:" << obj.weight
@@ -86,7 +87,7 @@ struct continousMACData
 
 /// Test cases
 struct singleMACTestCase : PEFixture, testing::WithParamInterface<singleMACData> {};
-struct continousMACTestCase : PEFixture, testing::WithParamInterface<continousMACData> {};
+struct continuousMACTestCase : PEFixture, testing::WithParamInterface<continuousMACData> {};
 
 /// The tests
 TEST_P(singleMACTestCase, singleMACTest)
@@ -95,34 +96,34 @@ TEST_P(singleMACTestCase, singleMACTest)
   const ParamType data = GetParam();
 
   // Load weights
-  _PE->setSigs(TestType(0), TestType(0), data.weight, true);
+  _PE->setSigs(TestType(0), TestType(0), data.weight);
   _PE->step();
 
   // Check output & Compute
   EXPECT_EQ(TestType(0), _PE->getReg2());
-  _PE->setSigs(data.input, data.carry, TestType(0), false);
+  _PE->setSigs(data.input, data.carry, data.weight);
   _PE->step();
   EXPECT_EQ(data.result, _PE->getReg2());
 }
 
-TEST_P(continousMACTestCase, continousMACTest)
+TEST_P(continuousMACTestCase, continuousMACTest)
 {
   // Get the data
   const ParamType data = GetParam();
 
   // Load weights
-  _PE->setSigs(TestType(0), TestType(0), data.weight, true);
+  _PE->setSigs(TestType(0), TestType(0), data.weight);
   _PE->step();
 
   // Check output & Compute
   EXPECT_EQ(TestType(0), _PE->getReg2());
-  _PE->setSigs(data.input1, data.carry1, TestType(0), false);
+  _PE->setSigs(data.input1, data.carry1, data.weight);
   _PE->step();
   EXPECT_EQ(data.result1, _PE->getReg2());
-  _PE->setSigs(data.input2, data.carry2, TestType(0), false);
+  _PE->setSigs(data.input2, data.carry2, data.weight);
   _PE->step();
   EXPECT_EQ(data.result2, _PE->getReg2());
-  _PE->setSigs(data.input3, data.carry3, TestType(0), false);
+  _PE->setSigs(data.input3, data.carry3, data.weight);
   _PE->step();
   EXPECT_EQ(data.result3, _PE->getReg2());
 }
@@ -155,12 +156,12 @@ INSTANTIATE_TEST_CASE_P(Fraction, singleMACTestCase, testing::Values(
     singleMACData{ TestType(2.0),  TestType(2.5),   TestType(-2),   TestType(3)     }
 ));
 
-INSTANTIATE_TEST_CASE_P(Default, continousMACTestCase, testing::Values(
-    continousMACData{ TestType(0),    TestType(0),     TestType(0),    TestType(0),
+INSTANTIATE_TEST_CASE_P(Default, continuousMACTestCase, testing::Values(
+    continuousMACData{ TestType(0),    TestType(0),     TestType(0),    TestType(0),
                       TestType(1.1),   TestType(0.01), TestType(0.01),
                       TestType(-1.02), TestType(1.4),  TestType(1.4)    },
 
-    continousMACData{ TestType(-1.25), TestType(2.1875), TestType(-1),   TestType(-3.734375),
+    continuousMACData{ TestType(-1.25), TestType(2.1875), TestType(-1),   TestType(-3.734375),
                       TestType(2.5),    TestType(-2),   TestType(-5.125),
                       TestType(-3.25),  TestType(-5),   TestType(-0.9375) }
 ));
