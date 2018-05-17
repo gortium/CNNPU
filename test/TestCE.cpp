@@ -7,7 +7,6 @@
 #include "fi/overflow/Saturate.hpp"
 #include "fi/rounding/Classic.hpp"
 #include "CNNP/CE.hpp"
-#include "CNNP/PE.hpp"
 #include "CNNP/HyperParams.hpp"
 #include "gtest/gtest.h"
 #include <queue>
@@ -102,7 +101,7 @@ TEST_P(ConvTestCase, ConvTest)
   SetUp(data.layerHParam.filterSize, data.layerHParam.inputWidth + data.layerHParam.padding * 2);
 
   /// Load weight and bias
-  _CE->setSigs(TestType(0), data.weights, true, data.bias, true);
+  _CE->setSigs(TestType(0), data.weights,data.bias);
   _CE->step();
 
   for(int i = 0; i < maxStep; i++)
@@ -196,11 +195,11 @@ TEST_P(ConvTestCase, ConvTest)
     /// Input
     if(loadInputFlag)
     {
-      _CE->setSigs(data.inputs[inHI][inWI], data.weights, false, data.bias, false);
+      _CE->setSigs(data.inputs[inHI][inWI], data.weights, data.bias);
     }
     else
     {
-      _CE->setSigs(TestType(0), data.weights, false, data.bias, false);
+      _CE->setSigs(TestType(0), data.weights, data.bias);
     }
 
     /// STEP
