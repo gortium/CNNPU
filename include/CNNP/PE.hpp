@@ -40,12 +40,11 @@ class PE
   T _reg0, _reg1, _reg2; ///< The PE registers as T type
   T _w;                  ///< The weight register as T type
   T _sig1, _sig2, _sig3; ///< The PE signals as T type
-  bool _wEnable;         ///< The PE signals as T type
 
   public:
   PE();
   ~PE();
-  void setSigs(T sig1, T sig2, T sig3, bool wEnable);
+  void setSigs(T sig1, T sig2, T sig3);
   T getReg1();
   T getReg2();
   T step();
@@ -61,8 +60,7 @@ _reg2(T(0)),
 _w(T(0)),
 _sig1(T(0)),
 _sig2(T(0)),
-_sig3(T(0)),
-_wEnable(false)
+_sig3(T(0))
 {}
 
 template<typename T>
@@ -70,12 +68,11 @@ PE<T>::~PE()
 {}
 
 template<typename T>
-void PE<T>::setSigs(T sig1, T sig2,  T sig3, bool wEnable)
+void PE<T>::setSigs(T sig1, T sig2,  T sig3)
 {
   _sig1 = sig1;
   _sig2 = sig2;
   _sig3 = sig3;
-  _wEnable = wEnable;
 }
 
 template<typename T>
@@ -97,7 +94,7 @@ T PE<T>::step()
   _reg1 = _reg0;
   _reg0 = _sig1;
   _reg2 = (_w * _sig1) + _sig2;
-  if(_wEnable){_w = _sig3;}
+  _w = _sig3;
 }
 
 #endif //PE_H
