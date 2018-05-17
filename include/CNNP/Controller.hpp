@@ -10,8 +10,7 @@
 #include "HyperParams.hpp"
 #include "CE.hpp"
 
-#define FILTER_SIZE 9
-#define BIT_WIDHT 8
+
 
 /**
  * Objects that control multiple (one for now) CE to perform convolution neural network computation.
@@ -30,6 +29,7 @@ class Controller
   int _state;
   /// Hyperparams
   LayerHParam _layerHParam;
+  ///
   /// Buffers
   std::vector< std::vector< std::vector< std::vector<T> > > > _weights;
   std::vector< std::vector< std::vector<T> > > _inputs;
@@ -53,6 +53,33 @@ Controller<T>::Controller(std::vector< CE<T> >& CEs, LayerHParam layerHParam):
     _inWI(0), _inHI(0), _inDI(0), _outWI(0), _outHI(0), _outDI(0),
     _layerSteps(0),
     _state(1),
+int maxStep =   data.layerHParam.inputHeight * data.layerHParam.inputWidth        /* Steps for all the image          */
+                              + data.layerHParam.filterSize * 2                                 /* Steps between FIFO and output    */
+                              + data.layerHParam.inputWidth + data.layerHParam.padding * 2 - 1  /* Step to get the last input out   */
+                              + data.layerHParam.padding * data.layerHParam.inputWidth * 2      /* Steps for padding top and bottom */
+                              + data.layerHParam.padding * data.layerHParam.inputHeight * 2     /* Steps for padding sides          */
+                              + data.layerHParam.padding * data.layerHParam.padding * 4;        /* Steps for padding corners        */
+
+int topPaddingSteps =   data.layerHParam.padding * data.layerHParam.inputWidth     // Top padding
+                        + data.layerHParam.padding * data.layerHParam.padding * 2;  // Corner padding
+
+int inputSteps =  data.layerHParam.inputHeight * data.layerHParam.inputWidth     // Inputs
+                  + data.layerHParam.padding * data.layerHParam.inputHeight * 2  // Side padding
+                  + data.layerHParam.padding * data.layerHParam.inputWidth       // Top padding
+                  + data.layerHParam.padding * data.layerHParam.padding * 2;      // Corner padding
+
+int outputSteps = data.layerHParam.filterSize * (data.layerHParam.inputWidth
+                                                 + data.layerHParam.padding * 2)    // FIFO fill-up
+                  + data.layerHParam.filterSize * 2  - 1                             // PE steps
+                  + data.layerHParam.filterSize                                      // Adders steps
+                  - 1;                                                               // Because start at 0
+
+int nextRowSteps = (data.layerHParam.inputWidth          // Scrap next row steps
+                    + data.layerHParam.padding * 2        // Scrap next row padding steps
+                    + data.layerHParam.filterSize - 1)    // Scrap next row transition steps
+                   * (data.layerHParam.stride - 1)       // ..for every stride > 1
+                   - 1;                                  // -1 because it begin down counting next step
+
 
     /// Hyperparams
     _layerHParam(layerHParam),
@@ -67,31 +94,6 @@ template<typename T>
 Controller<T>::~Controller()
 {}
 
-template<typename T>
-T relu(T input)
-{
-  return (input > 0) ? input : 0;
-}
-
-//template<typename T>
-//void Controller<T>::LoadFromMem(Memory<T>& mem, T& reg, int& add)
-//{
-//  reg = mem.Read(add);
-//  add++;
-//}
-//
-//template<typename T>
-//void Controller<T>::SaveToMem(Memory<T>& mem, T& reg, int& add)
-//{
-//  mem.Write(add,reg);
-//  add++;
-//}
-//
-//template<typename T>
-//void Controller<T>::SaveToBuffer(T& buffer[], T& data[])
-//{
-//  buffer = data;
-//}
 
 template<typename T>
 void Controller<T>::step()
