@@ -52,10 +52,7 @@ class CE
   T _biasSig;                                 ///< The bias signal as a T type
   std::vector< std::vector<T> > _weightSigs;  ///< The weights signals as a vector of vector of T type
   T _inputSig;                                ///< The inputs signal as a T type
-  // Control signals
-  bool _bEnableSig;                           ///< The control signal that enable the writing of the bias register
-  bool _wEnableSig;                           ///< The control signal that enable the writing of the weights register
-  // Registers
+ // Registers
   T _outputReg;                               ///< The output register as a T type
   std::vector<T> _adderRegs;                  ///< The adder registers as a vector of T type
   std::vector< std::queue<T> > _syncRegs;     ///< The synchronization registers as a vector of queue of T type
@@ -70,7 +67,7 @@ class CE
   int latency();
   void step();
   T getOutputReg();
-  void setSigs(T input, std::vector< std::vector<T> > weights, bool wEnable, T bias, bool bEnable);
+  void setSigs(T input, std::vector< std::vector<T> > weights, T bias);
 };
 
 // --------------- Templatized Implementation ---------------
@@ -89,9 +86,7 @@ CE<T>::CE(int filterSize, int fifoSize) :
     _biasSig(T(0)),
     _inputSig(T(0)),
     _outputReg(T(0)),
-    _adderRegs(_size, T(0)),
-    _bEnableSig(0),
-    _wEnableSig(0)
+    _adderRegs(_size, T(0))
 {
   if(_size == 0)
   {
@@ -186,13 +181,11 @@ T CE<T>::getOutputReg()
 * @return the CE output register as a T type
 */  
 template <typename T>
-void CE<T>::setSigs(T input, std::vector< std::vector<T> > weights, bool wEnable, T bias, bool bEnable)
+void CE<T>::setSigs(T input, std::vector< std::vector<T> > weights, T bias)
 {
   _inputSig = input;
   _biasSig = bias;
   _weightSigs = weights;
-  _wEnableSig = wEnable;
-  _bEnableSig = bEnable;
 }
 /**  
 * @brief Execute one step. Need to be called every step 
@@ -254,17 +247,11 @@ void CE<T>::step()
     }
   }
 
-  /// Bias mux
-  if (_bEnableSig)
-  {
-    _adderRegs.front() = _biasSig;
-  }
+  /// Bias
+  _adderRegs.front() = _biasSig;
 
-  /// Weights mux
-  if (_wEnableSig)
-  {
-    _weightRegs = _weightSigs;
-  }
+  /// Weights
+  _weightRegs = _weightSigs;
 
   /// Inputs
   // new input into the lower fifo
