@@ -48,7 +48,7 @@ class PE
   T getDataOutputReg();
   T getOutputReg();
   void setSigs(T dataInputSig, T partialResultSig, T weightSig);
-  T step();
+  void step();
 };
 
 // --------------- Templatized Implementation ---------------
@@ -68,7 +68,7 @@ _partialResultSig(T(0)),
 _weightSig(T(0))
 {}
 /**  
-* @brief  CE object destructor
+* @brief  PE object destructor
 *
 * @tparam T Type of input and output data
 *
@@ -134,7 +134,7 @@ void PE<T>::setSigs(T dataInputSig, T partialResultSig,  T weightSig)
 * @tparam T Type of input and output data
 */
 template<typename T>
-T PE<T>::step()
+void PE<T>::step()
 {
   // Internal signal propagation
   _dataOutputReg = _delayReg;
