@@ -1,6 +1,15 @@
-//
-// Created by gortium on 2/15/18.
-//
+/**
+ *  @file    TestPE.cpp
+ *  @author  Thierry Pouplier (gortium)
+ *  @date    15/02/2018
+ *  @version 1.0
+ *
+ *  @brief Processing element module Tests
+ *
+ *  @section DESCRIPTION
+ *
+ *  This file use googletest to test the PE module
+ */
 
 
 #include "fi/Fixed.hpp"
@@ -27,7 +36,6 @@ struct PEFixture : testing::Test
 
   ~PEFixture()
   {
-    delete _PE;
     delete _PE;
   }
 };
@@ -100,10 +108,10 @@ TEST_P(singleMACTestCase, singleMACTest)
   _PE->step();
 
   // Check output & Compute
-  EXPECT_EQ(TestType(0), _PE->getReg2());
+  EXPECT_EQ(TestType(0), _PE->getOutputReg());
   _PE->setSigs(data.input, data.carry, data.weight);
   _PE->step();
-  EXPECT_EQ(data.result, _PE->getReg2());
+  EXPECT_EQ(data.result, _PE->getOutputReg());
 }
 
 TEST_P(continuousMACTestCase, continuousMACTest)
@@ -116,16 +124,16 @@ TEST_P(continuousMACTestCase, continuousMACTest)
   _PE->step();
 
   // Check output & Compute
-  EXPECT_EQ(TestType(0), _PE->getReg2());
+  EXPECT_EQ(TestType(0), _PE->getOutputReg());
   _PE->setSigs(data.input1, data.carry1, data.weight);
   _PE->step();
-  EXPECT_EQ(data.result1, _PE->getReg2());
+  EXPECT_EQ(data.result1, _PE->getOutputReg());
   _PE->setSigs(data.input2, data.carry2, data.weight);
   _PE->step();
-  EXPECT_EQ(data.result2, _PE->getReg2());
+  EXPECT_EQ(data.result2, _PE->getOutputReg());
   _PE->setSigs(data.input3, data.carry3, data.weight);
   _PE->step();
-  EXPECT_EQ(data.result3, _PE->getReg2());
+  EXPECT_EQ(data.result3, _PE->getOutputReg());
 }
 
 /// Test instantiation

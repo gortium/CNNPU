@@ -1,6 +1,15 @@
-//
-// Created by gortium on 2/15/18.
-//
+/**
+ *  @file    TestCE.cpp
+ *  @author  Thierry Pouplier (gortium)
+ *  @date    15/02/2018
+ *  @version 1.0
+ *
+ *  @brief Convolution element module Tests
+ *
+ *  @section DESCRIPTION
+ *
+ *  This file use googletest to test the CE module
+ */
 
 
 #include "fi/Fixed.hpp"
