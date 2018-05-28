@@ -199,7 +199,7 @@ void CE<T>::step()
     // If there is only one PE
     if(_size - 1 == 0)
     {
-      _outputReg = _PEs[i][_size - 1].getReg2() + _adderRegs[i];
+      _outputReg = _PEs[i][_size - 1].getOutputReg() + _adderRegs[i];
     }
     // For the first cycle, last adder
     else if (i == _size - 1)
@@ -209,7 +209,7 @@ void CE<T>::step()
       // For the last cycle, first adder
     else if (i == 0)
     {
-      _adderRegs[i + 1] = _PEs[i][_size - 1].getReg2() + _adderRegs[i];
+      _adderRegs[i + 1] = _PEs[i][_size - 1].getOutputReg() + _adderRegs[i];
     }
       // All the others in the middle
     else
@@ -220,7 +220,7 @@ void CE<T>::step()
     /// Sycn Registery
     if(i != 0)
     {
-      _syncRegs[i - 1].push(_PEs[i][_size - 1].getReg2());
+      _syncRegs[i - 1].push(_PEs[i][_size - 1].getOutputReg());
       _syncRegs[i - 1].pop();
     }
 
@@ -231,12 +231,12 @@ void CE<T>::step()
       // Every cycle exept the last one, first PE
       if (j != 0)
       {
-        _PEs[i][j].setSigs(_PEs[i][j - 1].getReg1(), _PEs[i][j - 1].getReg2(), _weightRegs[i][j], _wEnableSig);
+        _PEs[i][j].setSigs(_PEs[i][j - 1].getDataOutputReg(), _PEs[i][j - 1].getOutputReg(), _weightRegs[i][j]);
       }
       // For the last cycle, the first colum of PE
       else
       {
-        _PEs[i][j].setSigs(_inputRegs[i].front(), T(0), _weightRegs[i][j], _wEnableSig);
+        _PEs[i][j].setSigs(_inputRegs[i].front(), T(0), _weightRegs[i][j]);
       }
 
       _PEs[i][j].step();
