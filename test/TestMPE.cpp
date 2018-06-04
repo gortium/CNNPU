@@ -15,8 +15,8 @@
 #include "fi/Fixed.hpp"
 #include "fi/overflow/Saturate.hpp"
 #include "fi/rounding/Classic.hpp"
-#include "CNNP/MPE.hpp"
-#include "CNNP/HyperParams.hpp"
+#include "CNNPU/MPE.hpp"
+#include "CNNPU/HyperParams.hpp"
 #include "gtest/gtest.h"
 #include <queue>
 #include <vector>

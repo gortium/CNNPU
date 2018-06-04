@@ -12,8 +12,8 @@
  *
  */
 
-#ifndef CNNP_MPE_HPP
-#define CNNP_MPE_HPP
+#ifndef CNNPU_MPE_HPP
+#define CNNPU_MPE_HPP
 
 #include <vector>
 
@@ -121,4 +121,4 @@ void MPE<T>::step()
     }
 }
 
-#endif //CNNP_MPE_HPP
+#endif //CNNPU_MPE_HPP
