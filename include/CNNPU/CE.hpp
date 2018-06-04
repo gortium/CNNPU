@@ -32,7 +32,7 @@
 #ifndef CE_H
 #define CE_H
 
-#include "CNNP/PE.hpp"
+#include "CNNPU/PE.hpp"
 #include <vector>
 #include <queue>
 
@@ -43,31 +43,47 @@
  */
 
 template <typename T>
-class CE
+class CE : public BaseElement
 {
-  private:
-  // Parameter
-  int _size;                                  ///< The size of the filter as int 
-  // Input signals
-  T _biasSig;                                 ///< The bias signal as a T type
-  std::vector< std::vector<T> > _weightSigs;  ///< The weights signals as a vector of vector of T type
-  T _inputSig;                                ///< The inputs signal as a T type
- // Registers
-  T _outputReg;                               ///< The output register as a T type
-  std::vector<T> _adderRegs;                  ///< The adder registers as a vector of T type
-  std::vector< std::queue<T> > _syncRegs;     ///< The synchronization registers as a vector of queue of T type
-  std::vector< std::vector<T> > _weightRegs;  ///< The weights registers as a vector of vector of T type 
-  std::vector< std::queue<T> > _inputRegs;    ///< The inputs registers as a vector of queue of T type 
-  // Submodule
-  std::vector< std::vector< PE<T> > > _PEs;   ///< A vector of vector containning PE submodules
-
   public:
-  CE(int filterSize, int fifoSize);
-  ~CE();
-  int latency();
-  void step();
-  T getOutputReg();
-  void setSigs(T input, std::vector< std::vector<T> > weights, T bias);
+    typedef struct CEInSigs : InSigs
+    {
+      T input;
+      std::vector< std::vector<T> > weights;
+      T bias;
+
+      CEInSigs();
+      CEInSigs(T input_p, std::vector< std::vector<T> > weights_p, T bias_p);
+    };
+
+    typedef struct CEOutSigs : OutSigs
+    {
+      T result;
+    };
+
+    CE(int filterSize, int fifoSize);
+    ~CE();
+    int latency();
+    void step();
+    CEOutSigs getOutputSigs();
+    void setSigs(CEInSigs);
+
+  private:
+    CEOutSigs ceOutSigs;
+    // Parameter
+    int _size;                                  ///< The size of the filter as int
+    // Input signals
+    T _biasSig;                                 ///< The bias signal as a T type
+    std::vector< std::vector<T> > _weightSigs;  ///< The weights signals as a vector of vector of T type
+    T _inputSig;                                ///< The inputs signal as a T type
+   // Registers
+    T _outputReg;                               ///< The output register as a T type
+    std::vector<T> _adderRegs;                  ///< The adder registers as a vector of T type
+    std::vector< std::queue<T> > _syncRegs;     ///< The synchronization registers as a vector of queue of T type
+    std::vector< std::vector<T> > _weightRegs;  ///< The weights registers as a vector of vector of T type
+    std::vector< std::queue<T> > _inputRegs;    ///< The inputs registers as a vector of queue of T type
+    // Submodule
+    std::vector< std::vector< PE<T> > > _PEs;   ///< A vector of vector containning PE submodules
 };
 
 // --------------- Templatized Implementation ---------------
@@ -163,8 +179,9 @@ int CE<T>::latency()
 * @return the CE output register as a T type
 */  
 template<typename T>
-T CE<T>::getOutputReg()
+CEOutSigs CE<T>::getOutputSigs()
 {
+  CEOutSigs
   return _outputReg;
 }
 /**  

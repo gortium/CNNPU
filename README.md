@@ -26,7 +26,7 @@ The automated tests are made with the help of the [Google Test library](https://
 
 ### Compiling the code
 
-The compiling is done withe the help of [cmake](https://cmake.org/). This command executed at the project root (CNNP/) should build everything for you.
+The compiling is done with the help of [cmake](https://cmake.org/). This command executed at the project root (CNNPU/) should build everything for you.
 ```
 cmake
 ```
@@ -40,7 +40,7 @@ TODO -> doxygen
 The test can be found in src/test folder. There is one test file for every module containing unit tests for this module. 
 Executing one should run all the test for that module.
 The test are not true unit test in the fact that no mocking is used for now. To properly test the whole processor,
-smaller module should be tested first. PE, then CE, then Controller, then the CNNP. 
+smaller module should be tested first. PE, then CE, then Controller, then the CNNPU. 
 
 To add tests, the [Google Test](https://github.com/google/googletest/blob/master/googletest/docs/Primer.md) framework need to be understood. The google test suite is open source and can be found [HERE](https://github.com/google/googletest)
 

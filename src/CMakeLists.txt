@@ -4,4 +4,4 @@ set(CMAKE_CXX_STNDARD 11)
 
 include_directories("../include")
 
-add_executable(CNNPU CNNP/main.cpp)
+add_executable(CNNPU CNNPU/main.cpp)

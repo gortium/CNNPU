@@ -54,4 +54,4 @@ CNNPU<T>::CNNPU()
 
 }
 
-#endif //CNNP_CNNP_H
+#endif //CNNPU_CNNPU_H
