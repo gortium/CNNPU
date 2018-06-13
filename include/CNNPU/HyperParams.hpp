@@ -20,9 +20,16 @@ struct layerHParam
       inputDepth(inputDepth_p),
       layerType(UNDEFINED)
   {}
+
+  layerHParam(int inputWidth_p, int inputHeight_p, int inputDepth_p, LayerType layerType):
+      inputWidth(inputWidth_p),
+      inputHeight(inputHeight_p),
+      inputDepth(inputDepth_p),
+      layerType(layerType)
+  {}
 };
 
-struct ConvLayerHParam : public layerHParam
+typedef struct ConvLayerHParam : public layerHParam
 {
   const int nbOfFilter;
   const int filterSize;
@@ -31,36 +38,42 @@ struct ConvLayerHParam : public layerHParam
 
   ConvLayerHParam(int inputWidth_p, int inputHeight_p, int inputDepth_p, int nbOfFilter_p, int filterSize_p,
                   int stride_p, int padding_p):
-      layerHParam(inputWidth_p, inputHeight_p, inputDepth_p),
+      layerHParam(inputWidth_p, inputHeight_p, inputDepth_p, CONVOLUTION),
       nbOfFilter(nbOfFilter_p),
       filterSize(filterSize_p),
       stride(stride_p),
-      padding(padding_p),
-      layerType(CONVOLUTION)
+      padding(padding_p)
   {}
-};
 
-struct PoolLayerHParam : layerHParam
+  ConvLayerHParam(int inputWidth_p, int inputHeight_p, int inputDepth_p, int nbOfFilter_p, int filterSize_p,
+                  int stride_p, int padding_p, LayerType layertype):
+      layerHParam(inputWidth_p, inputHeight_p, inputDepth_p, layertype),
+      nbOfFilter(nbOfFilter_p),
+      filterSize(filterSize_p),
+      stride(stride_p),
+      padding(padding_p)
+  {}
+}ConvLayerHParam;
+
+typedef struct PoolLayerHParam : layerHParam
 {
   const int filterSize;
   const int stride;
 
-  PoolLayerHParam(int inputWidth_p, int inputHeight_p, int inputDepth_p, int filterSide_p, int stride_p):
-      layerHParam(inputWidth_p, inputHeight_p, inputDepth_p),
+  PoolLayerHParam(int inputWidth_p, int inputHeight_p, int inputDepth_p, int filterSize_p, int stride_p):
+      layerHParam(inputWidth_p, inputHeight_p, inputDepth_p, POOLING),
       filterSize(filterSize_p),
-      stride(stride_p),
-      layerType(POOLING)
+      stride(stride_p)
   {}
-};
+}PoolLayerHParam;
 
-struct FullyConnectedHParam : ConvLayerHParam
+typedef struct FullyConnectedHParam : ConvLayerHParam
 {
   FullyConnectedHParam(int inputWidth_p, int inputHeight_p, int inputDepth_p, int nbOfFilter_p, int filterSize_p,
                        int stride_p, int padding_p):
-      ConvLayerHParam(inputWidth_p, inputHeight_p, inputDepth_p, nbOfFilter_p, filterSize_p, stride_p, padding_p),
-      layerType(FULL)
+      ConvLayerHParam(inputWidth_p, inputHeight_p, inputDepth_p, nbOfFilter_p, filterSize_p, stride_p, padding_p, FULL)
   {}
-};
+}FullyConnectedHParam;
 
 typedef std::vector<layerHParam> CNNConfig;
 

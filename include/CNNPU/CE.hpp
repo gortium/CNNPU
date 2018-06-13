@@ -33,15 +33,17 @@
 #define CE_H
 
 #include "CNNPU/PE.hpp"
+#include "BaseElement.hpp"
 #include <vector>
 #include <queue>
+
+class BaseElement;
 
 /**
  * @brief Convolutionnal Element. Objects that compute a convolution
  *
  * @tparam T Type of input and output data
  */
-
 template <typename T>
 class CE : public BaseElement
 {
@@ -54,28 +56,33 @@ class CE : public BaseElement
 
       CEInSigs();
       CEInSigs(T input_p, std::vector< std::vector<T> > weights_p, T bias_p);
-    };
+    }CEInSigs;
 
     typedef struct CEOutSigs : OutSigs
     {
       T result;
-    };
+
+      CEOutSigs();
+      CEOutSigs(T result_p);
+    }CEOutSigs;
 
     CE(int filterSize, int fifoSize);
     ~CE();
     int latency();
     void step();
+    void connect(CEInSigs& ceInSigs, CEOutSigs& ceOutSigs);
     CEOutSigs getOutputSigs();
-    void setSigs(CEInSigs);
+    void setSigs(CEInSigs&);
 
   private:
-    CEOutSigs ceOutSigs;
+    CEOutSigs* _ceOutSigs;
+    CEInSigs* _ceInSigs;
     // Parameter
     int _size;                                  ///< The size of the filter as int
     // Input signals
-    T _biasSig;                                 ///< The bias signal as a T type
-    std::vector< std::vector<T> > _weightSigs;  ///< The weights signals as a vector of vector of T type
-    T _inputSig;                                ///< The inputs signal as a T type
+    //T _biasSig;                                 ///< The bias signal as a T type
+    //std::vector< std::vector<T> > _weightSigs;  ///< The weights signals as a vector of vector of T type
+    //T _inputSig;                                ///< The inputs signal as a T type
    // Registers
     T _outputReg;                               ///< The output register as a T type
     std::vector<T> _adderRegs;                  ///< The adder registers as a vector of T type
@@ -99,8 +106,8 @@ template<typename T>
 */  
 CE<T>::CE(int filterSize, int fifoSize) :
     _size(filterSize),
-    _biasSig(T(0)),
-    _inputSig(T(0)),
+//    _biasSig(T(0)),
+//    _inputSig(T(0)),
     _outputReg(T(0)),
     _adderRegs(_size, T(0))
 {
@@ -171,6 +178,14 @@ int CE<T>::latency()
   lag += (_PEs[0][0].latency())*_PEs.size()*2;
   return lag;
 }
+
+template<typename T>
+void CE<T>::connect(CEInSigs& ceInSigs, CEOutSigs& ceOutSigs)
+{
+  _ceInSigs = ceInSigs;
+  _ceOutSigs = ceOutSigs;
+}
+
 /**  
 * @brief  Function used get the output register of the CE
 *
@@ -178,12 +193,11 @@ int CE<T>::latency()
 *  
 * @return the CE output register as a T type
 */  
-template<typename T>
-CEOutSigs CE<T>::getOutputSigs()
-{
-  CEOutSigs
-  return _outputReg;
-}
+//template<typename T>
+//typename CE<T>::CEOutSigs CE<T>::getOutputSigs()
+//{
+//  return _outputReg;
+//}
 /**  
 * @brief  Function used to set the input signals before each step
 *
@@ -193,13 +207,13 @@ CEOutSigs CE<T>::getOutputSigs()
 * @param  weights is the weights that are written to the weights registers
 * @param  bias is the bias that is written to the bias registers
 */  
-template <typename T>
-void CE<T>::setSigs(T input, std::vector< std::vector<T> > weights, T bias)
-{
-  _inputSig = input;
-  _biasSig = bias;
-  _weightSigs = weights;
-}
+//template <typename T>
+//void CE<T>::setSigs(CEInSigs&)
+//{
+//  _inputSig = CEInSigs.input;
+//  _biasSig = CEInSigs.bias;
+//  _weightSigs = CEInSigs.weights;
+//}
 /**  
 * @brief Execute one step. Need to be called every step 
 *
@@ -261,14 +275,14 @@ void CE<T>::step()
   }
 
   /// Bias
-  _adderRegs.front() = _biasSig;
+  _adderRegs.front() = _ceInSigs->bias;
 
   /// Weights
-  _weightRegs = _weightSigs;
+  _weightRegs = _ceInSigs->weights;
 
   /// Inputs
   // new input into the lower fifo
-  _inputRegs.back().push(_inputSig);
+  _inputRegs.back().push(_ceInSigs->input);
   // top of other fifo into the bottom of the next fifo
   for (int i = _inputRegs.size() - 1; i >= 1; i--)
   {
@@ -277,5 +291,34 @@ void CE<T>::step()
   }
   _inputRegs.front().pop();
 }
+
+template<typename T>
+CE<T>::CEInSigs::CEInSigs():
+    input(0),
+    bias(0)
+{
+  weights.resize(_size);
+  for(int i=0; i < weights.size(); i++)
+  {
+    weights[i].assign(_size, T(0));
+  }
+}
+
+template<typename T>
+CE<T>::CEInSigs::CEInSigs(T input_p, std::vector< std::vector<T> > weights_p, T bias_p):
+    input(input_p),
+    weights(weights_p),
+    bias(bias_p)
+{}
+
+template<typename T>
+CE<T>::CEOutSigs::CEOutSigs():
+result(0)
+{}
+
+template<typename T>
+CE<T>::CEOutSigs::CEOutSigs(T result_p):
+result(result_p)
+{}
 
 #endif //CE_H

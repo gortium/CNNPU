@@ -27,6 +27,10 @@
 #ifndef PE_H
 #define PE_H
 
+//#include "BaseElement.hpp"
+//
+//class BaseElement;
+
 /**
  * @brief Processing Element
  * Objects that compute a MAC.
@@ -34,21 +38,21 @@
  *@tparam T      Type of input and output data.
  **/
 template <typename T>
-class PE
+class PE //: public BaseElement
 {
   private:
-  T _delayReg, _dataOutputReg, _outputReg; ///< The PE registers as T type
-  T _w;                  ///< The weight register as T type
-  T _dataInputSig, _partialResultSig, _weightSig; ///< The PE signals as T type
+    T _delayReg, _dataOutputReg, _outputReg; ///< The PE registers as T type
+    T _w;                  ///< The weight register as T type
+    T _dataInputSig, _partialResultSig, _weightSig; ///< The PE signals as T type
 
   public:
-  PE();
-  ~PE();
-  int latency();
-  T getDataOutputReg();
-  T getOutputReg();
-  void setSigs(T dataInputSig, T partialResultSig, T weightSig);
-  void step();
+    PE();
+    ~PE();
+    int latency();
+    T getDataOutputReg();
+    T getOutputReg();
+    void setSigs(T dataInputSig, T partialResultSig, T weightSig);
+    void step();
 };
 
 // --------------- Templatized Implementation ---------------
